@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+    <?php
+
+    ?>
+    <script>
+
+        function next()
+        {
+            var img = document.getElementById("image");
+            //document.write(img.src.substring(36,41));
+            if (parseInt(img.src.substring(36,41))+1+100000 == 108042) {
+                img.src = "http://10.192.53.200/cars_test_temp/00001.jpg";
+                return false;
+            }
+            img.src = "http://10.192.53.200/cars_test_temp/" + ((parseInt(img.src.substring(36,41))+1+100000).toString()).substring(1) + ".jpg";
+            return false;
+        }
+
+        function prev() {
+            var img = document.getElementById("image");
+            if (parseInt(img.src.substring(36,41))-1+100000 == 100000) {
+                img.src = "http://10.192.53.200/cars_test_temp/08041.jpg";
+                return false;
+            }
+            img.src = "http://10.192.53.200/cars_test_temp/" + ((parseInt(img.src.substring(36,41))-1+100000).toString()).substring(1) + ".jpg";
+            return false;
+        }
+
+    </script>
+</head>
+<body>
+<h2>Car</h2>
+<img id="image" src="http://10.192.53.200/cars_test_temp/00001.jpg" alt="car test" style="width:800px;height:500px;">
+<button id="prev" onclick="prev();">Previous</button>
+<button id="next" onclick="next();">Next</button>
+</body>
+</html>
