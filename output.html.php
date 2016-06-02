@@ -7,18 +7,22 @@ if( $_GET["next"] || $_GET["prev"] || $_GET["imgNum"]) {
     $i = $_GET['imgNum'];
     mysqli_select_db($link, "imageClassificationManual") or die ("no database");
     $imageNumber = $i;
-    if($_GET["x"] != -1){
-        $qUpd = 'INSERT INTO bbox (imgName, boxX, boxY, boxW, boxH) VALUES('.$_GET['imgNum'].','.$_GET['x'].','.$_GET['y'].','.$_GET['w'].','.$_GET['h'].')';
+    if(($_GET["x"] != -1) && ($_GET['label'] != "***")){
+        
+        $qUpd = 'INSERT INTO bbox (imgName, boxX, boxY, boxW, boxH, label) VALUES('.$_GET['imgNum'].','.$_GET['x'].','.$_GET['y'].','.$_GET['w'].','.$_GET['h'].','.'\''.$_GET['label'].'\')';
         //$qUpd = 'UPDATE images SET imageX='.$_GET['x'].' WHERE imageNumber='.$_GET['imgNum'];
         $retval = mysqli_query($link, $qUpd) or die(mysqli_error());
-        if(! $retval )
-        {
+        if(! $retval ){
             die('Could not update data: ' . mysqli_error());
         }
         mysqli_close($link);
     }
     if($_GET["next"]){
         $imageNumber = $i + 1;
+        $img = substr((string)($imageNumber + 100000), 1);
+    }
+    if($_GET["prev"]){
+        $imageNumber = $i - 1;
         $img = substr((string)($imageNumber + 100000), 1);
     }
 }
@@ -39,7 +43,9 @@ if( $_GET["next"] || $_GET["prev"] || $_GET["imgNum"]) {
         ctx.drawImage(img,0,0,img.width,img.height, 0, 0, canvas.width, canvas.height);
     };
 </script>
-
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 <body>
 <h2>Car</h2>
 <canvas id="myCanvas" width="800" height="500" style="border:1px solid #d3d3d3;">
@@ -68,8 +74,29 @@ if( $_GET["next"] || $_GET["prev"] || $_GET["imgNum"]) {
         rect.startY = e.pageY - this.offsetTop;
         drag = true;
     }
+    var cls = '***';
     function mouseUp() {
-        var cls1 = prompt("Please enter class for selected box", "car");
+        //cls = prompt("Please enter class for selected box", "car");
+        $(function() {
+            $("#dialog").dialog({
+                autoOpen: true,
+                buttons: {
+                    Car: function() {
+                        cls = 'car';
+                        $(this).dialog("close");
+                    },
+                    Person: function() {
+                        cls = 'person';
+                        $(this).dialog("close");
+                    },
+                    Motorcycle: function() {
+                        cls = 'motorcycle';
+                        $(this).dialog("close");
+                    }
+                },
+                width: "400px"
+            })});
+        if(cls == null) {cls = '***'};
         drag = false;
     }
     function mouseMove(e) {
@@ -81,7 +108,6 @@ if( $_GET["next"] || $_GET["prev"] || $_GET["imgNum"]) {
             draw();
         }
     }
-    var cls;
     function draw() {
         //ctx.fillRect(rect.startX, rect.startY, rect.w, rect.h);
         //ctx.rect(rect.startX, rect.startY, rect.w, rect.h);
@@ -94,15 +120,16 @@ if( $_GET["next"] || $_GET["prev"] || $_GET["imgNum"]) {
     }
     init();
     function next(){
-        document.getElementById('cnxt').href="./index.php?imgNum=<?php echo $imageNumber ?>&next=1&x=" + x.toString() + "&y=" + y.toString() + "&w=" + w.toString() + "&h=" + h.toString();
+        document.getElementById('cnxt').href="./index.php?imgNum=<?php echo $imageNumber ?>&next=1&x=" + x.toString() + "&y=" + y.toString() + "&w=" + w.toString() + "&h=" + h.toString() + "&label=" + cls.toString();
     }
     function prev(){
-        document.getElementById('cprev').href="./index.php?imgNum=<?php echo $imageNumber ?>&prev=1&x=" + x.toString() + "&y=" + y.toString() + "&w=" + w.toString() + "&h=" + h.toString();
+        document.getElementById('cprev').href="./index.php?imgNum=<?php echo $imageNumber ?>&prev=1&x=" + x.toString() + "&y=" + y.toString() + "&w=" + w.toString() + "&h=" + h.toString() + "&label=" + cls.toString();
     }
 </script>
 
 <a href = "" id="cprev" onclick=prev()>Previous</a>
 <a href = "" id="cnxt" onclick=next()>Next</a>
+<div id="dialog">Select a class</div>
 
 </body>
 </html>
