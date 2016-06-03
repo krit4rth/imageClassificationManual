@@ -3,33 +3,36 @@ global $link;
 global $img;
 $img = '00001';
 $imageNumber = 1;
-if( $_GET["next"] || $_GET["prev"] || $_GET["imgNum"]) {
-    $i = $_GET['imgNum'];
+if($_POST["imgNum"]) {
+    $i = $_POST['imgNum'];
+    if($_POST['imgNum'] == null) {
+        $i = 1;
+    }
     mysqli_select_db($link, "imageClassificationManual") or die ("no database");
-    $imageNumber = $i;
-    if(($_GET["x"] != -1) && ($_GET['label'] != "***")){
-        
-        $qUpd = 'INSERT INTO bbox (imgName, boxX, boxY, boxW, boxH, label) VALUES('.$_GET['imgNum'].','.$_GET['x'].','.$_GET['y'].','.$_GET['w'].','.$_GET['h'].','.'\''.$_GET['label'].'\')';
-        //$qUpd = 'UPDATE images SET imageX='.$_GET['x'].' WHERE imageNumber='.$_GET['imgNum'];
+    //$imageNumber = $i;
+    if(($_REQUEST["x"] != -1) && ($_REQUEST['label'] != "***")){
+
+        $qUpd = 'INSERT INTO bbox (imgName, boxX, boxY, boxW, boxH, label) VALUES(' . $_REQUEST['imgNum'] . ',' . $_REQUEST['x'] . ',' . $_REQUEST['y'] . ',' . $_REQUEST['w'] . ',' . $_REQUEST['h'] . ',' . '\'' . $_REQUEST['label'] . '\')';
         $retval = mysqli_query($link, $qUpd) or die(mysqli_error());
-        if(! $retval ){
+        if (!$retval) {
             die('Could not update data: ' . mysqli_error());
         }
+
         mysqli_close($link);
     }
-    if($_GET["next"]){
+    if($_POST["next"] == 1){
         $imageNumber = $i + 1;
         $img = substr((string)($imageNumber + 100000), 1);
     }
-    if($_GET["prev"]){
+    if($_POST["prev"] == 1){
         $imageNumber = $i - 1;
         $img = substr((string)($imageNumber + 100000), 1);
     }
 }
 ?>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html>
 <head>
-    <title>PHP Output</title>
+    <title>Classify</title>
     <meta http-equiv="content-type"
           content="text/html; charset=utf-8"/>
 </head>
@@ -43,9 +46,9 @@ if( $_GET["next"] || $_GET["prev"] || $_GET["imgNum"]) {
         ctx.drawImage(img,0,0,img.width,img.height, 0, 0, canvas.width, canvas.height);
     };
 </script>
-<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
-<script src="//code.jquery.com/jquery-1.10.2.js"></script>
-<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<link rel="stylesheet" href="./jquery-ui.css">
+<script src="./jquery-1.10.2.js"></script>
+<script src="./jquery-ui.js"></script>
 <body>
 <h2>Car</h2>
 <canvas id="myCanvas" width="800" height="500" style="border:1px solid #d3d3d3;">
@@ -75,28 +78,41 @@ if( $_GET["next"] || $_GET["prev"] || $_GET["imgNum"]) {
         drag = true;
     }
     var cls = '***';
+    //var cnt = 0;
     function mouseUp() {
         //cls = prompt("Please enter class for selected box", "car");
         $(function() {
+            x = rect.startX;
+            y = rect.startY;
+            w = rect.w;
+            h = rect.h;
             $("#dialog").dialog({
                 autoOpen: true,
                 buttons: {
                     Car: function() {
                         cls = 'car';
+                        drag = false;
                         $(this).dialog("close");
                     },
                     Person: function() {
                         cls = 'person';
+                        drag = false;
                         $(this).dialog("close");
                     },
                     Motorcycle: function() {
                         cls = 'motorcycle';
+                        drag = false;
                         $(this).dialog("close");
                     }
                 },
                 width: "400px"
-            })});
-        if(cls == null) {cls = '***'};
+            });
+            //cnt += 1;
+        });
+        if(cls == null) {
+            cls = '***';
+            //cnt -= 1;
+        }
         drag = false;
     }
     function mouseMove(e) {
@@ -112,24 +128,54 @@ if( $_GET["next"] || $_GET["prev"] || $_GET["imgNum"]) {
         //ctx.fillRect(rect.startX, rect.startY, rect.w, rect.h);
         //ctx.rect(rect.startX, rect.startY, rect.w, rect.h);
         ctx.strokeRect(rect.startX, rect.startY, rect.w, rect.h);
-        x = rect.startX;
-        y = rect.startY;
-        w = rect.w;
-        h = rect.h;
-
     }
     init();
+
     function next(){
-        document.getElementById('cnxt').href="./index.php?imgNum=<?php echo $imageNumber ?>&next=1&x=" + x.toString() + "&y=" + y.toString() + "&w=" + w.toString() + "&h=" + h.toString() + "&label=" + cls.toString();
+        var parametersN = {
+            x: x,
+            y: y,
+            w: w,
+            h: h,
+            imgNum: <?php echo $imageNumber ?>,
+            next: 1,
+            label: cls.toString()
+        };
+        $.post(
+            './index.php',
+            parametersN,
+            function(data, textStatus){
+                document.write(data);
+            }
+        ).done(function(data, textStatus) {
+            document.close();
+        });
     }
     function prev(){
-        document.getElementById('cprev').href="./index.php?imgNum=<?php echo $imageNumber ?>&prev=1&x=" + x.toString() + "&y=" + y.toString() + "&w=" + w.toString() + "&h=" + h.toString() + "&label=" + cls.toString();
+        var parametersP = {
+            x: x,
+            y: y,
+            w: w,
+            h: h,
+            imgNum: <?php echo $imageNumber ?>,
+            prev: 1,
+            label: cls.toString(),
+        };
+        $.post(
+            './index.php',
+            parametersP,
+            function(data, textStatus){
+                document.write(data);
+            }
+        ).done(function(data, textStatus) {
+            document.close();
+        });
     }
 </script>
 
-<a href = "" id="cprev" onclick=prev()>Previous</a>
-<a href = "" id="cnxt" onclick=next()>Next</a>
-<div id="dialog">Select a class</div>
+<a id="cprev" onclick=prev()>Previous</a>
+<a id="cnxt" onclick=next()>Next</a>
+<div id="dialog" style="visibility: hidden">Select a class</div>
 
 </body>
 </html>
