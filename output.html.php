@@ -10,16 +10,25 @@ if($_POST["imgNum"]) {
     }
     mysqli_select_db($link, "imageClassificationManual") or die ("no database");
     //$imageNumber = $i;
-    if(($_REQUEST["x"] != -1) && ($_REQUEST['label'] != "***")){
-
-        $qUpd = 'INSERT INTO bbox (imgName, boxX, boxY, boxW, boxH, label) VALUES(' . $_REQUEST['imgNum'] . ',' . $_REQUEST['x'] . ',' . $_REQUEST['y'] . ',' . $_REQUEST['w'] . ',' . $_REQUEST['h'] . ',' . '\'' . $_REQUEST['label'] . '\')';
-        $retval = mysqli_query($link, $qUpd) or die(mysqli_error());
-        if (!$retval) {
-            die('Could not update data: ' . mysqli_error());
+    //$cc = sizeof($_POST['label']);
+    $cc = $_POST['ccc'];
+    echo $cc."<br>";
+    while ($cc > 0) {
+        $cc -= 1;
+        echo $_POST['x'][$cc]."<br>";
+        echo $_POST['y'][$cc]."<br>";
+        echo $_POST['w'][$cc]."<br>";
+        echo $_POST['h'][$cc]."<br>";
+        echo $_POST['label'][$cc+1]."<br>";
+        if(($_REQUEST['x'][$cc] != -1) && ($_REQUEST['label'][$cc+1] != "***") && ($_REQUEST['label'][$cc+1] != "")){
+            $qUpd = 'INSERT INTO bbox (imgName, boxX, boxY, boxW, boxH, label) VALUES(' . $_REQUEST['imgNum'] . ',' . $_REQUEST['x'][$cc] . ',' . $_REQUEST['y'][$cc] . ',' . $_REQUEST['w'][$cc] . ',' . $_REQUEST['h'][$cc] . ',' . '\'' . $_REQUEST['label'][$cc+1] . '\')';
+            $retval = mysqli_query($link, $qUpd) or die(mysqli_error());
+            if (!$retval) {
+                die('Could not update data: ' . mysqli_error());
+            }
         }
-
-        mysqli_close($link);
     }
+    mysqli_close($link);
     if($_POST["next"] == 1){
         $imageNumber = $i + 1;
         $img = substr((string)($imageNumber + 100000), 1);
@@ -56,10 +65,10 @@ if($_POST["imgNum"]) {
 </canvas>
 
 <script>
-    var x = -1;
-    var y = -1;
-    var w = -1;
-    var h = -1;
+    var x = [-1];
+    var y = [-1];
+    var w = [-1];
+    var h = [-1];
     var img = new Image;
     img.src = 'http://localhost/cars_test_temp/<?php echo $img ?>.jpg';
     var canvas = document.getElementById('myCanvas'),
@@ -77,41 +86,40 @@ if($_POST["imgNum"]) {
         rect.startY = e.pageY - this.offsetTop;
         drag = true;
     }
-    var cls = '***';
-    //var cnt = 0;
+    var cls = ['***'];
+    var cnt = 0;
     function mouseUp() {
-        //cls = prompt("Please enter class for selected box", "car");
         $(function() {
-            x = rect.startX;
-            y = rect.startY;
-            w = rect.w;
-            h = rect.h;
+            x[cnt] = rect.startX;
+            y[cnt] = rect.startY;
+            w[cnt] = rect.w;
+            h[cnt] = rect.h;
             $("#dialog").dialog({
                 autoOpen: true,
                 buttons: {
                     Car: function() {
-                        cls = 'car';
+                        cls[cnt] = 'car';
                         drag = false;
                         $(this).dialog("close");
                     },
                     Person: function() {
-                        cls = 'person';
+                        cls[cnt] = 'person';
                         drag = false;
                         $(this).dialog("close");
                     },
                     Motorcycle: function() {
-                        cls = 'motorcycle';
+                        cls[cnt] = 'motorcycle';
                         drag = false;
                         $(this).dialog("close");
                     }
                 },
                 width: "400px"
             });
-            //cnt += 1;
+            cnt += 1;
         });
-        if(cls == null) {
-            cls = '***';
-            //cnt -= 1;
+        if(cls[cnt-1] == null) {
+            cnt -= 1;
+            cls[cnt] = ['***'];
         }
         drag = false;
     }
@@ -133,13 +141,14 @@ if($_POST["imgNum"]) {
 
     function next(){
         var parametersN = {
-            x: x,
-            y: y,
-            w: w,
-            h: h,
+            'x[]': x,
+            'y[]': y,
+            'w[]': w,
+            'h[]': h,
             imgNum: <?php echo $imageNumber ?>,
             next: 1,
-            label: cls.toString()
+            ccc: cnt,
+            'label[]': cls
         };
         $.post(
             './index.php',
@@ -153,13 +162,13 @@ if($_POST["imgNum"]) {
     }
     function prev(){
         var parametersP = {
-            x: x,
-            y: y,
-            w: w,
-            h: h,
+            'x[]': x,
+            'y[]': y,
+            'w[]': w,
+            'h[]': h,
             imgNum: <?php echo $imageNumber ?>,
             prev: 1,
-            label: cls.toString(),
+            'label[]': cls
         };
         $.post(
             './index.php',
