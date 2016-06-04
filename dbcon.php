@@ -14,11 +14,10 @@ class dbcon
     }
     function connect()
     {
-        include_once dirname(__FILE__) . './Config.php';
+        include_once 'Config.php';
 
         //connecting to database
-        $this -> conn = new mysqli(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME);
-
+        $this -> conn = new mysqli($DB_HOST, $DB_USERNAME, $DB_PASSWORD, $DB_NAME);
         //check for connection error
         if(mysqli_connect_errno()) {
             echo "Failed to connect to MySQL Database: " . mysqli_connect_error();

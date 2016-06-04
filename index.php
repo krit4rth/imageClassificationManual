@@ -1,7 +1,6 @@
 <?php
         global $link;
         $link = mysqli_connect('localhost', 'root', 'visionn');
-        //$link = 0;
         if (!$link){
             $output = 'Unable to connect to the database server.';
             include 'output.html.php';
